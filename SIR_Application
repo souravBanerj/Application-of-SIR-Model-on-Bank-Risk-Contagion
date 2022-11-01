@@ -1,0 +1,150 @@
+import matplotlib.pyplot as plt
+b1=0.005
+b2=0.002
+b3=0.004
+w=0.3
+a=0.3
+g1=0.3
+g2=0.3
+lm=0.1
+e=0.4
+
+#Defining five function as follows:
+def susceptible(S, Is, In, R):
+    global b1,b2,e,w,a #defining a global variable
+    N = S + Is + In + R + C
+    return (w*In+e*R-(b1*S*In)-(b2*S*Is)-(a*S))
+    
+def infected(S, Is, In,C):
+     global b1,b2,b3,g1,lm
+     return (b1*S*In + b3*C*In -(b2*In*Is)-(g1+lm)*In)
+
+def infected_asym(S, Is,In,C):
+     global b2,w
+     return (b2*S*In + b2*In*Is +b2*C*Is -(w*Is))
+  
+def re(Is, In,C):
+     global b2,g2,lm
+     return (lm*In -(b3*C*In)-(b2*C*Is)-(g2*C))
+
+
+def res(S,In,R,C):
+    global g2,a,g1,e
+    return(g2*C +a*S -(e*R) + g1*In)
+    
+
+
+
+#Solving using RK4 method
+def rk4(S, Is, In,C,R,n):
+
+   #calculate step size
+   h=0.002
+   S_list = []
+   Is_list = []
+   In_list = []
+   I_total = []
+   C_list = []
+   R_list =[]
+  
+   total = S + Is + In  + C + R
+    
+   for i in range(1, n):
+      N = S + Is + In  + C + R
+      lam = 1
+      
+      if ((i % 2) == 0):
+          lam = 0.5
+
+      k1 = h * (susceptible(S, Is, In, R))
+
+      l1 = h * (infected(S, Is, In,C))
+        
+      la1 = h *(infected_asym(S, Is,In,C))
+    
+      m1 = h * (re(Is, In,C))
+      n1 = h*(res(S,In,R,C))
+  
+      
+      k2 = h * (susceptible((S+(k1)/2),(Is+(l1)/2), (In+(la1)/2), (R+(m1)/2)))
+  
+      l2 = h * (infected((S+(k1)/2),(Is+(l1)/2),(In+(la1)/2),(C+(m1)/2)))
+      la2 = h * (infected_asym((S+(k1)/2), (Is+(l1)/2),(In+(la1)/2),(C+ (m1)/2)))
+      m2 = h * (re((Is+(l1)/2), (In+(la1)/2),(C+ (m1)/2)))
+      n2 = h*(res((S+(k1)/2),(In+(la1)/2),(R+(n1)/2),(C+(m1)/2)))
+     
+      
+      k3 = h * (susceptible((S+(k2)/2), (Is+(l2)/2), (In+(la2)/2), (R+(m2)/2)))
+      l3 = h * (infected((S+(k2)/2), (Is+(l2)/2), (In+(la2)/2),(C+(m2)/2)))
+      la3 = h * (infected_asym((S+(k2)/2), (Is+(l2)/2),(In+(la2)/2),(C+(m2)/2)))
+      m3 = h * (re((Is+(l2)/2), (In+(la2)/2),(C+(m2)/2)))
+      n3 = h*(res((S+(k2)/2),(In+(la2)/2),(R+(n2)/2),(C+(m2)/2)))
+      
+      k4 = h * (susceptible((S+(k3)), (Is+(l3)), (In+(la3)), (R+(m3))))
+      l4 = h * (infected((S+k3), (Is+l3),(In+la3),(C+m3)))
+      la4 = h * (infected_asym((S+k3),(Is+l3),(In+la3),(C +m3)))
+      m4 = h * (re((Is+l3),(In+la3),(C+m3)))
+      n4 = h*(res((S+(k3)),(In +(la3)),(R+(n3)),(C+(m3))))
+      
+      k = (k1 + (2 * k2) + (2 * k3) + k4) / 6
+      S = S + k
+      
+      l = (l1 + (2 * l2) + (2 * l3) + l4) / 6
+      Is = Is + l
+      
+      la = (la1 + (2 * la2) + (2 * la3) + la4) / 6
+      In = In + la
+      
+      m = (m1 + (2 * m2) + (2 * m3) + m4) / 6
+      C = C + m
+    
+      nn = (n1 + (2 * n2) + (2 * n3) + n4) / 6
+      R = R + nn
+      
+    
+
+      S_list.append(S)
+      Is_list.append(Is)
+      In_list.append(In)
+      I_total.append((Is + In))
+      C_list.append(C)
+      R_list.append(R)
+  
+      
+      if((S < 0) or (Is < 0) or (In < 0) or (C < 0) or (R<0) ):
+         S = S - k
+         Is = Is - l
+         In = In - la
+         C = C - m
+         R = R - nn
+    
+         break
+   peak_infections_index = I_total.index(max(I_total))
+
+   plt.plot(list(range(len(S_list))), S_list, color = 'green')
+   plt.plot(list(range(len(I_total))), I_total, color = 'brown')
+   plt.plot(list(range(len(Is_list))), Is_list, color = 'red')
+   plt.plot(list(range(len(In_list))), In_list, color = 'orange')
+   plt.plot(list(range(len(C_list))), C_list, color = 'blue')
+   plt.plot(list(range(len(R_list))), R_list, color = 'black')
+  
+  
+   plt.gca().legend(['Susceptible', 'Infected - Total', 'Infected - systemic risk', 'Infected - Not systemic risk', 'Carrier', 'Recovered'])
+   plt.title('SIR using Differential equations - Symptomatic and Asymptomatic Infected ')
+   plt.rcParams["figure.figsize"] = (20,6)
+   plt.xlabel("Time Period")
+   plt.ylabel("Population N")
+   plt.show()
+   
+   
+#Defining initial parameters   
+S = 900 #Defining the parameter of the function
+Is = 1
+In = 9
+C = 5
+R=0
+n = 15000
+
+
+#calling the function
+rk4(S, Is, In, C, R,n)
